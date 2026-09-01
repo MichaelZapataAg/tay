@@ -13,15 +13,19 @@ import { haptic } from '@/lib/haptics';
 export interface NewCapitalMovementModalProps {
   visible: boolean;
   onClose: () => void;
+  defaultType?: 'inyeccion' | 'gasto_capital' | 'reposicion_capital' | 'retiro_utilidad' | 'retiro_capital';
 }
 
 export function NewCapitalMovementModal({
   visible,
   onClose,
+  defaultType = 'inyeccion',
 }: NewCapitalMovementModalProps) {
   const createMovementMutation = useCreateCapitalMovement();
 
-  const [typeSelection, setTypeSelection] = useState<'inyeccion' | 'retiro_capital' | 'retiro_utilidad'>('inyeccion');
+  const [typeSelection, setTypeSelection] = useState<
+    'inyeccion' | 'gasto_capital' | 'reposicion_capital' | 'retiro_utilidad' | 'retiro_capital'
+  >(defaultType);
   const [amount, setAmount] = useState<number>(1_000_000);
   const todayStr = new Date().toISOString().split('T')[0];
   const [date, setDate] = useState(todayStr);
@@ -45,7 +49,7 @@ export function NewCapitalMovementModal({
       visible={visible}
       onClose={onClose}
       title="Movimiento de Capital"
-      subtitle="Inyecciones o retiros de tu fondo"
+      subtitle="Controla tu fondo, gastos y ganancias"
       footer={
         <Button
           onPress={handleSubmit}
@@ -61,9 +65,36 @@ export function NewCapitalMovementModal({
       <Text style={styles.sectionTitle}>Tipo de movimiento:</Text>
       <View style={styles.typeRow}>
         {[
-          { id: 'inyeccion', label: 'Inyectar Capital', sub: 'Meto más plata al fondo' },
-          { id: 'retiro_capital', label: 'Retirar Capital', sub: 'Saco plata de mi fondo' },
-          { id: 'retiro_utilidad', label: 'Retirar Ganancia', sub: 'Saco mis intereses ganados' },
+          {
+            id: 'inyeccion',
+            icon: '💰',
+            label: 'Inyectar Capital',
+            sub: 'Meto más plata propia a mi fondo para prestar',
+          },
+          {
+            id: 'gasto_capital',
+            icon: '💸',
+            label: 'Gasto del Capital (a reponer)',
+            sub: 'Saqué plata del capital para un gasto y debo reponerla',
+          },
+          {
+            id: 'reposicion_capital',
+            icon: '🔄',
+            label: 'Reponer Capital',
+            sub: 'Devuelvo plata al fondo para saldar lo que saqué',
+          },
+          {
+            id: 'retiro_utilidad',
+            icon: '👛',
+            label: 'Retirar Ganancias',
+            sub: 'Saco mis intereses cobrados para mi uso personal',
+          },
+          {
+            id: 'retiro_capital',
+            icon: '🚫',
+            label: 'Retiro Definitivo de Capital',
+            sub: 'Reduzco el tamaño de mi fondo de préstamos',
+          },
         ].map((t) => {
           const isSelected = typeSelection === t.id;
           return (
@@ -76,7 +107,7 @@ export function NewCapitalMovementModal({
               style={[styles.typeCard, isSelected && styles.typeCardActive]}
             >
               <Text style={[styles.typeTitle, isSelected && styles.typeTitleActive]}>
-                {t.label}
+                {t.icon} {t.label}
               </Text>
               <Text style={styles.typeSub}>{t.sub}</Text>
             </Pressable>
@@ -84,18 +115,18 @@ export function NewCapitalMovementModal({
         })}
       </View>
 
-      <Text style={[styles.sectionTitle, { marginTop: spacing[3] }]}>Monto:</Text>
+      <Text style={[styles.sectionTitle, { marginTop: spacing[3] }]}>Monto en Pesos:</Text>
       <MoneyInput
         value={amount}
         onChangeValue={setAmount}
-        presets={[1_000_000, 2_000_000, 5_000_000, 10_000_000]}
+        presets={[100_000, 500_000, 1_000_000, 2_000_000, 5_000_000]}
       />
 
       <DateField label="Fecha:" value={date} onChangeValue={setDate} />
 
       <Input
         label="Descripción o motivo (opcional):"
-        placeholder="Ej. Aporte de ahorros personales para nuevos clientes"
+        placeholder="Ej. Arreglo moto / Reposición quincena / Aporte inicial"
         value={notes}
         onChangeText={setNotes}
       />

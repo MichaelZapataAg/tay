@@ -18,6 +18,8 @@ import {
   CreditCard,
   Trash2,
   Sparkles,
+  AlertCircle,
+  RotateCcw,
 } from 'lucide-react-native';
 import {
   useCapitalMetrics,
@@ -39,6 +41,9 @@ export default function CapitalScreen() {
   const insets = useSafeAreaInsets();
   const [selectedPeriod, setSelectedPeriod] = useState(currentPeriod());
   const [movementModalVisible, setMovementModalVisible] = useState(false);
+  const [defaultMovementType, setDefaultMovementType] = useState<
+    'inyeccion' | 'gasto_capital' | 'reposicion_capital' | 'retiro_utilidad' | 'retiro_capital'
+  >('inyeccion');
 
   const { data: metrics, refetch: refetchMetrics, isRefetching } = useCapitalMetrics(selectedPeriod);
   const { data: monthlyBreakdown, refetch: refetchBreakdown } = useMonthlyBreakdown(selectedPeriod);
@@ -55,6 +60,12 @@ export default function CapitalScreen() {
       refetchMovements(),
       refetchPayments(),
     ]);
+  };
+
+  const openModalWithType = (t: 'inyeccion' | 'gasto_capital' | 'reposicion_capital' | 'retiro_utilidad' | 'retiro_capital') => {
+    haptic.selection();
+    setDefaultMovementType(t);
+    setMovementModalVisible(true);
   };
 
   return (
@@ -83,7 +94,7 @@ export default function CapitalScreen() {
           />
         }
       >
-        {/* HERO 1: TU GANANCIA REAL (LILA / MENTA GIRLY) */}
+        {/* HERO 1: TU GANANCIA REAL (INTERESES) */}
         <View style={styles.profitHeroCard}>
           <View style={styles.profitHeroHeader}>
             <View style={styles.profitBadge}>
@@ -101,28 +112,94 @@ export default function CapitalScreen() {
           </Text>
         </View>
 
-        {/* HERO 2: CAPITAL EN LA CALLE VS CAPITAL RECUPERADO (PASTEL) */}
-        <View style={styles.capitalSplitRow}>
-          {/* Capital en calle (Celeste pastel) */}
-          <View style={[styles.capitalCard, styles.capitalCardStreet]}>
-            <Text style={styles.capitalCardLabel}>Capital en la calle:</Text>
-            <Text style={styles.capitalCardValue}>{money(metrics?.capitalInStreet || 0)}</Text>
-            <Text style={styles.capitalCardSub}>Prestado en clientes</Text>
+        {/* ALERTA DE GASTOS PENDIENTES POR REPONER AL CAPITAL */}
+        {(metrics?.pendingToRestore || 0) > 0 ? (
+          <View style={styles.debtAlertCard}>
+            <View style={styles.debtAlertHeader}>
+              <View style={styles.debtAlertBadge}>
+                <AlertCircle size={16} color={colors.dueDark} style={{ marginRight: 4 }} />
+                <Text style={styles.debtAlertTitle}>Gastos pendientes por reponer al fondo</Text>
+              </View>
+              <Pressable
+                onPress={() => openModalWithType('reposicion_capital')}
+                style={styles.btnReponerHeader}
+              >
+                <RotateCcw size={14} color="#FFFFFF" style={{ marginRight: 4 }} />
+                <Text style={styles.btnReponerHeaderText}>Reponer</Text>
+              </Pressable>
+            </View>
+            <Text style={styles.debtAlertAmount}>{money(metrics?.pendingToRestore || 0)}</Text>
+            <Text style={styles.debtAlertSub}>
+              Sacaste este dinero de tu capital para gastos. Cuando lo repongas, tu caja volverá a cuadrar.
+            </Text>
+          </View>
+        ) : null}
+
+        {/* CUADRE GENERAL DEL FONDO DE CAPITAL */}
+        <View style={styles.sectionHeaderRow}>
+          <Text style={styles.sectionTitle}>💰 Estado de tu Capital</Text>
+        </View>
+
+        <View style={styles.capitalGrid}>
+          {/* Fondo Total Activo */}
+          <View style={styles.capitalGridItem}>
+            <Text style={styles.capitalGridLabel}>Fondo Total Activo:</Text>
+            <Text style={styles.capitalGridVal}>{money(metrics?.netCapitalBase || 0)}</Text>
+            <Text style={styles.capitalGridSub}>Tu capital total propio</Text>
           </View>
 
-          {/* Capital recuperado este mes */}
-          <View style={[styles.capitalCard, styles.capitalCardRecovered]}>
-            <Text style={styles.capitalCardLabel}>Capital recuperado:</Text>
-            <Text style={[styles.capitalCardValue, { color: colors.primaryDark }]}>
-              {money(metrics?.capitalCollectedMonth || 0)}
-            </Text>
-            <Text style={styles.capitalCardSub}>Listo para volver a prestar</Text>
+          {/* Capital Disponible en Caja */}
+          <View style={[styles.capitalGridItem, { backgroundColor: colors.todaySoft, borderColor: colors.todayBorder }]}>
+            <Text style={[styles.capitalGridLabel, { color: colors.todayDark }]}>Disponible en Caja:</Text>
+            <Text style={[styles.capitalGridVal, { color: colors.todayDark }]}>{money(metrics?.capitalInBox || 0)}</Text>
+            <Text style={[styles.capitalGridSub, { color: colors.todayDark }]}>En mano para prestar</Text>
           </View>
+
+          {/* Capital en la Calle */}
+          <View style={[styles.capitalGridItem, { backgroundColor: '#F0F9FF', borderColor: '#BAE6FD' }]}>
+            <Text style={[styles.capitalGridLabel, { color: '#0369A1' }]}>En la Calle:</Text>
+            <Text style={[styles.capitalGridVal, { color: '#0369A1' }]}>{money(metrics?.capitalInStreet || 0)}</Text>
+            <Text style={[styles.capitalGridSub, { color: '#0369A1' }]}>Prestado a clientes</Text>
+          </View>
+
+          {/* Capital Recuperado este Mes */}
+          <View style={[styles.capitalGridItem, { backgroundColor: colors.primarySubtle, borderColor: colors.primarySoft }]}>
+            <Text style={[styles.capitalGridLabel, { color: colors.primaryDark }]}>Recuperado este mes:</Text>
+            <Text style={[styles.capitalGridVal, { color: colors.primaryDark }]}>{money(metrics?.capitalCollectedMonth || 0)}</Text>
+            <Text style={[styles.capitalGridSub, { color: colors.primaryDark }]}>Retornó a tu caja</Text>
+          </View>
+        </View>
+
+        {/* BOTONES DE ACCIONES RÁPIDAS DE CAPITAL */}
+        <View style={styles.actionButtonsRow}>
+          <Pressable
+            onPress={() => openModalWithType('inyeccion')}
+            style={styles.actionBtnInyectar}
+          >
+            <Plus size={16} color="#FFFFFF" style={{ marginRight: 4 }} />
+            <Text style={styles.actionBtnInyectarText}>+ Inyectar Capital</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => openModalWithType('gasto_capital')}
+            style={styles.actionBtnGasto}
+          >
+            <ArrowDownLeft size={16} color={colors.dueDark} style={{ marginRight: 4 }} />
+            <Text style={styles.actionBtnGastoText}>- Gasto a Reponer</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => openModalWithType('reposicion_capital')}
+            style={styles.actionBtnReponer}
+          >
+            <RotateCcw size={16} color={colors.primaryDark} style={{ marginRight: 4 }} />
+            <Text style={styles.actionBtnReponerText}>🔄 Reponer</Text>
+          </Pressable>
         </View>
 
         {/* DESGLOSE POR MEDIO DE PAGO */}
         <View style={styles.sectionCard}>
-          <Text style={styles.sectionCardTitle}>💳 Recaudos por Medio de Pago</Text>
+          <Text style={styles.sectionCardTitle}>💳 Recaudos por Medio de Pago en {formatPeriod(selectedPeriod)}</Text>
           <View style={styles.paymentMethodsGrid}>
             <View style={styles.methodBox}>
               <Text style={styles.methodName}>Nequi</Text>
@@ -205,14 +282,11 @@ export default function CapitalScreen() {
           </View>
         )}
 
-        {/* MOVIMIENTOS DE CAPITAL DE TAY (INYECCIONES / RETIROS) */}
+        {/* MOVIMIENTOS DE CAPITAL DE TAY */}
         <View style={[styles.sectionHeaderRow, { marginTop: spacing[6] }]}>
-          <Text style={styles.sectionTitle}>🏦 Fondo de Préstamos (Inyecciones y Retiros)</Text>
+          <Text style={styles.sectionTitle}>🏦 Historial de Movimientos del Capital</Text>
           <Pressable
-            onPress={() => {
-              haptic.selection();
-              setMovementModalVisible(true);
-            }}
+            onPress={() => openModalWithType('inyeccion')}
             style={styles.btnAddMovement}
           >
             <Plus size={16} color={colors.primaryDark} style={{ marginRight: 4 }} />
@@ -220,65 +294,82 @@ export default function CapitalScreen() {
           </Pressable>
         </View>
 
-        <View style={styles.baseCapitalSummaryBox}>
-          <View style={styles.baseCapitalCol}>
-            <Text style={styles.baseCapitalLabel}>Total inyectado al fondo:</Text>
-            <Text style={styles.baseCapitalVal}>{money(metrics?.totalInjected || 0)}</Text>
-          </View>
-          <View style={styles.baseCapitalCol}>
-            <Text style={styles.baseCapitalLabel}>Retiros de capital:</Text>
-            <Text style={styles.baseCapitalVal}>{money(metrics?.totalWithdrawnCapital || 0)}</Text>
-          </View>
-        </View>
-
         {movements.length > 0 ? (
           movements.map((m) => {
             const isInyeccion = m.type === 'inyeccion';
+            const isGasto = m.type === 'gasto_capital';
+            const isReposicion = m.type === 'reposicion_capital';
+            const isRetiroUtilidad = m.type === 'retiro_utilidad';
+
+            let tagLabel = 'Inyección de Capital';
+            let tagColor = colors.primarySoft;
+            let tagTextColor = colors.primaryDark;
+            let sign = '+';
+
+            if (isGasto) {
+              tagLabel = 'Gasto del Capital (a reponer)';
+              tagColor = colors.dueSoft;
+              tagTextColor = colors.dueDark;
+              sign = '-';
+            } else if (isReposicion) {
+              tagLabel = 'Reposición de Capital';
+              tagColor = colors.todaySoft;
+              tagTextColor = colors.todayDark;
+              sign = '+';
+            } else if (isRetiroUtilidad) {
+              tagLabel = 'Retiro de Ganancias';
+              tagColor = colors.surfaceSubtle;
+              tagTextColor = colors.inkSecondary;
+              sign = '-';
+            } else if (m.type === 'retiro_capital') {
+              tagLabel = 'Retiro de Capital';
+              tagColor = colors.surfaceSubtle;
+              tagTextColor = colors.danger;
+              sign = '-';
+            }
+
             return (
               <View key={m.id} style={styles.movementItem}>
                 <View
                   style={[
                     styles.movementIconBox,
-                    isInyeccion ? styles.movementIconIn : styles.movementIconOut,
+                    { backgroundColor: tagColor },
                   ]}
                 >
-                  {isInyeccion ? (
-                    <ArrowDownLeft size={18} color={colors.primaryDark} />
+                  {sign === '+' ? (
+                    <ArrowDownLeft size={18} color={tagTextColor} />
                   ) : (
-                    <ArrowUpRight size={18} color={colors.pinkDark} />
+                    <ArrowUpRight size={18} color={tagTextColor} />
                   )}
                 </View>
+
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.movementTitle}>
-                    {isInyeccion
-                      ? 'Inyección al Fondo'
-                      : m.type === 'retiro_utilidad'
-                      ? 'Retiro de Ganancias'
-                      : 'Retiro de Capital'}
-                  </Text>
-                  <Text style={styles.movementSub}>
-                    {dateLong(m.date)} {m.notes ? `• ${m.notes}` : ''}
-                  </Text>
+                  <Text style={styles.movementType}>{tagLabel}</Text>
+                  <Text style={styles.movementDate}>{dateLong(m.date)}</Text>
+                  {m.notes ? <Text style={styles.movementNotes}>{m.notes}</Text> : null}
                 </View>
-                <Text
-                  style={[
-                    styles.movementAmount,
-                    isInyeccion ? { color: colors.primaryDark } : { color: colors.ink },
-                  ]}
-                >
-                  {isInyeccion ? '+' : '-'}
-                  {money(m.amount)}
-                </Text>
-                <Pressable
-                  onPress={async () => {
-                    haptic.selection();
-                    await deleteMovementMutation.mutateAsync(m.id);
-                  }}
-                  hitSlop={8}
-                  style={{ marginLeft: 8 }}
-                >
-                  <Trash2 size={16} color={colors.inkLight} />
-                </Pressable>
+
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text
+                    style={[
+                      styles.movementAmount,
+                      { color: sign === '+' ? colors.primaryDark : colors.dueDark },
+                    ]}
+                  >
+                    {sign}{money(m.amount)}
+                  </Text>
+
+                  <Pressable
+                    onPress={async () => {
+                      haptic.selection();
+                      await deleteMovementMutation.mutateAsync(m.id);
+                    }}
+                    hitSlop={8}
+                    style={{ marginTop: 4 }}
+                  >
+                    <Trash2 size={14} color={colors.inkLight} />
+                  </Pressable>
+                </View>
               </View>
             );
           })
@@ -287,13 +378,12 @@ export default function CapitalScreen() {
             <Text style={styles.emptyCardText}>No hay movimientos de capital registrados.</Text>
           </View>
         )}
-
-        <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* MODAL MOVIMIENTO DE CAPITAL */}
+      {/* MODAL PARA NUEVO MOVIMIENTO */}
       <NewCapitalMovementModal
         visible={movementModalVisible}
+        defaultType={defaultMovementType}
         onClose={() => setMovementModalVisible(false)}
       />
     </View>
@@ -330,7 +420,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: spacing[4],
     paddingTop: spacing[4],
-    paddingBottom: 120,
+    paddingBottom: 140,
   },
   profitHeroCard: {
     backgroundColor: colors.primarySubtle,
@@ -361,56 +451,173 @@ const styles = StyleSheet.create({
     color: colors.primaryDark,
   },
   profitPeriodText: {
-    ...type.caption,
+    ...type.micro,
     color: colors.primaryDeep,
-    textTransform: 'capitalize',
   },
   profitAmount: {
     fontFamily: fonts.titleBold,
     fontSize: 32,
     color: colors.primaryDark,
-    marginVertical: 4,
+    marginVertical: spacing[1],
   },
   profitSub: {
     ...type.caption,
     color: colors.primaryDeep,
     lineHeight: 18,
   },
-  capitalSplitRow: {
-    flexDirection: 'row',
-    gap: spacing[3],
-    marginBottom: spacing[3],
-  },
-  capitalCard: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
+  debtAlertCard: {
+    backgroundColor: '#FFF9FA',
     borderRadius: radii.xl,
     padding: spacing[4],
+    borderWidth: 1.5,
+    borderColor: colors.dueBorder,
+    marginBottom: spacing[3],
+    ...shadows.sm,
+  },
+  debtAlertHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing[2],
+  },
+  debtAlertBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  debtAlertTitle: {
+    fontFamily: fonts.bold,
+    fontSize: 13,
+    color: colors.dueDark,
+  },
+  btnReponerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.due,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: radii.full,
+  },
+  btnReponerHeaderText: {
+    fontFamily: fonts.bold,
+    fontSize: 12,
+    color: '#FFFFFF',
+  },
+  debtAlertAmount: {
+    fontFamily: fonts.titleBold,
+    fontSize: 24,
+    color: colors.dueDark,
+    marginBottom: 4,
+  },
+  debtAlertSub: {
+    ...type.micro,
+    color: colors.dueDark,
+    lineHeight: 16,
+  },
+  capitalGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing[2],
+    marginBottom: spacing[4],
+  },
+  capitalGridItem: {
+    width: '48.5%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: radii.lg,
+    padding: spacing[3],
     borderWidth: 1,
     borderColor: colors.border,
     ...shadows.sm,
   },
-  capitalCardStreet: {
-    backgroundColor: colors.accentSubtle,
-    borderColor: colors.accentSoft,
-  },
-  capitalCardRecovered: {
-    backgroundColor: '#FFFFFF',
-  },
-  capitalCardLabel: {
+  capitalGridLabel: {
     ...type.micro,
     color: colors.inkMuted,
     marginBottom: 2,
   },
-  capitalCardValue: {
+  capitalGridVal: {
     fontFamily: fonts.titleBold,
     fontSize: 18,
-    color: colors.accentDark,
+    color: colors.ink,
   },
-  capitalCardSub: {
+  capitalGridSub: {
     ...type.micro,
-    color: colors.inkMuted,
+    color: colors.inkLight,
     marginTop: 2,
+  },
+  actionButtonsRow: {
+    flexDirection: 'row',
+    gap: spacing[2],
+    marginBottom: spacing[4],
+  },
+  actionBtnInyectar: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
+    paddingVertical: spacing[3],
+    borderRadius: radii.lg,
+    ...shadows.sm,
+  },
+  actionBtnInyectarText: {
+    fontFamily: fonts.bold,
+    fontSize: 12,
+    color: '#FFFFFF',
+  },
+  actionBtnGasto: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.dueSoft,
+    borderWidth: 1,
+    borderColor: colors.dueBorder,
+    paddingVertical: spacing[3],
+    borderRadius: radii.lg,
+  },
+  actionBtnGastoText: {
+    fontFamily: fonts.bold,
+    fontSize: 12,
+    color: colors.dueDark,
+  },
+  actionBtnReponer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primarySubtle,
+    borderWidth: 1,
+    borderColor: colors.primarySoft,
+    paddingVertical: spacing[3],
+    borderRadius: radii.lg,
+  },
+  actionBtnReponerText: {
+    fontFamily: fonts.bold,
+    fontSize: 12,
+    color: colors.primaryDark,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing[3],
+  },
+  sectionTitle: {
+    ...type.title,
+    color: colors.ink,
+  },
+  btnAddMovement: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primarySoft,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderRadius: radii.full,
+  },
+  btnAddMovementText: {
+    fontFamily: fonts.bold,
+    fontSize: 12,
+    color: colors.primaryDark,
   },
   sectionCard: {
     backgroundColor: '#FFFFFF',
@@ -435,45 +642,22 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: '45%',
     backgroundColor: colors.surfaceSubtle,
-    borderRadius: radii.lg,
+    borderRadius: radii.md,
     padding: spacing[3],
   },
   methodName: {
-    ...type.micro,
+    ...type.caption,
     color: colors.inkMuted,
-    marginBottom: 2,
   },
   methodAmount: {
     fontFamily: fonts.titleBold,
     fontSize: 16,
     color: colors.ink,
-  },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing[3],
-  },
-  sectionTitle: {
-    ...type.subtitle,
-    color: colors.ink,
-  },
-  btnAddMovement: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.primarySoft,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: radii.full,
-  },
-  btnAddMovementText: {
-    fontFamily: fonts.bold,
-    fontSize: 12,
-    color: colors.primaryDark,
+    marginTop: 2,
   },
   paymentCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: radii.xl,
+    borderRadius: radii.lg,
     padding: spacing[4],
     borderWidth: 1,
     borderColor: colors.border,
@@ -484,83 +668,60 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 4,
+    marginBottom: spacing[2],
   },
   paymentClientName: {
-    fontFamily: fonts.bold,
-    fontSize: 16,
+    ...type.bodyBold,
     color: colors.ink,
   },
   paymentDate: {
     ...type.micro,
     color: colors.inkMuted,
-    marginTop: 2,
+    marginTop: 1,
   },
   paymentTotal: {
     fontFamily: fonts.titleBold,
-    fontSize: 17,
-    color: colors.ink,
+    fontSize: 18,
+    color: colors.primaryDark,
   },
   paymentBreakdownRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    backgroundColor: colors.surfaceSubtle,
-    padding: spacing[2] + 2,
-    borderRadius: radii.md,
-    marginTop: 6,
+    gap: spacing[4],
+    paddingTop: spacing[2],
+    borderTopWidth: 1,
+    borderTopColor: colors.surfaceSubtle,
+    marginBottom: spacing[2],
   },
   paymentInterestPart: {
     ...type.micro,
-    fontFamily: fonts.bold,
     color: colors.primaryDark,
+    fontFamily: fonts.bold,
   },
   paymentCapitalPart: {
     ...type.micro,
-    fontFamily: fonts.bold,
-    color: colors.accentDark,
+    color: colors.inkSecondary,
   },
   deletePaymentBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
     gap: 4,
-    marginTop: 8,
+    alignSelf: 'flex-end',
+    marginTop: 2,
   },
   deletePaymentText: {
     ...type.micro,
     color: colors.danger,
   },
-  baseCapitalSummaryBox: {
-    flexDirection: 'row',
-    backgroundColor: colors.surfaceSubtle,
-    borderRadius: radii.xl,
-    padding: spacing[4],
-    marginBottom: spacing[3],
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  baseCapitalCol: {
-    flex: 1,
-  },
-  baseCapitalLabel: {
-    ...type.micro,
-    color: colors.inkMuted,
-  },
-  baseCapitalVal: {
-    fontFamily: fonts.titleBold,
-    fontSize: 15,
-    color: colors.ink,
-    marginTop: 2,
-  },
   movementItem: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: radii.xl,
-    padding: spacing[3] + 2,
+    borderRadius: radii.lg,
+    padding: spacing[3],
     borderWidth: 1,
     borderColor: colors.border,
     marginBottom: spacing[2],
+    gap: spacing[3],
     ...shadows.sm,
   },
   movementIconBox: {
@@ -569,22 +730,20 @@ const styles = StyleSheet.create({
     borderRadius: radii.full,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: spacing[3],
   },
-  movementIconIn: {
-    backgroundColor: colors.primarySoft,
-  },
-  movementIconOut: {
-    backgroundColor: colors.pinkSoft,
-  },
-  movementTitle: {
-    fontFamily: fonts.bold,
-    fontSize: 15,
+  movementType: {
+    ...type.bodyBold,
+    fontSize: 14,
     color: colors.ink,
   },
-  movementSub: {
+  movementDate: {
     ...type.micro,
     color: colors.inkMuted,
+    marginTop: 1,
+  },
+  movementNotes: {
+    ...type.micro,
+    color: colors.inkSecondary,
     marginTop: 2,
   },
   movementAmount: {
@@ -594,14 +753,16 @@ const styles = StyleSheet.create({
   emptyCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: radii.xl,
-    padding: spacing[5],
+    padding: spacing[6],
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
     borderColor: colors.border,
-    alignItems: 'center',
-    ...shadows.sm,
+    marginBottom: spacing[3],
   },
   emptyCardText: {
-    ...type.bodyMedium,
+    ...type.caption,
     color: colors.inkMuted,
+    textAlign: 'center',
   },
 });

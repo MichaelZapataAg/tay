@@ -8,14 +8,21 @@ import { newId } from '@/lib/id';
 export interface CapitalMetrics {
   totalInjected: number;
   totalWithdrawnCapital: number;
-  totalWithdrawnProfits: number;
   netCapitalBase: number;
+
+  totalSpentFromCapital: number;
+  totalRestoredCapital: number;
+  pendingToRestore: number;
 
   capitalInStreet: number;
   capitalCollectedMonth: number;
-  interestEarnedMonth: number;
+  capitalInBox: number;
 
+  interestEarnedMonth: number;
   totalInterestEarnedAllTime: number;
+  totalWithdrawnProfits: number;
+  availableProfits: number;
+
   totalCapitalCollectedAllTime: number;
 }
 
@@ -36,14 +43,19 @@ export async function getCapitalMetrics(period?: string): Promise<CapitalMetrics
     let totalInjected = 0;
     let totalWithdrawnCapital = 0;
     let totalWithdrawnProfits = 0;
+    let totalSpentFromCapital = 0;
+    let totalRestoredCapital = 0;
 
     for (const m of movements) {
       if (m.type === 'inyeccion') totalInjected += m.amount;
       else if (m.type === 'retiro_capital') totalWithdrawnCapital += m.amount;
       else if (m.type === 'retiro_utilidad') totalWithdrawnProfits += m.amount;
+      else if (m.type === 'gasto_capital') totalSpentFromCapital += m.amount;
+      else if (m.type === 'reposicion_capital') totalRestoredCapital += m.amount;
     }
 
-    const netCapitalBase = totalInjected - totalWithdrawnCapital;
+    const netCapitalBase = Math.max(0, totalInjected - totalWithdrawnCapital);
+    const pendingToRestore = Math.max(0, totalSpentFromCapital - totalRestoredCapital);
     const capitalInStreet = activeLoans.reduce((sum: number, l: any) => sum + (l.current_capital || 0), 0);
 
     let capitalCollectedMonth = 0;
@@ -61,15 +73,23 @@ export async function getCapitalMetrics(period?: string): Promise<CapitalMetrics
       }
     }
 
+    const availableProfits = Math.max(0, totalInterestEarnedAllTime - totalWithdrawnProfits);
+    const capitalInBox = Math.max(0, netCapitalBase - capitalInStreet - pendingToRestore);
+
     return {
       totalInjected,
       totalWithdrawnCapital,
-      totalWithdrawnProfits,
       netCapitalBase,
+      totalSpentFromCapital,
+      totalRestoredCapital,
+      pendingToRestore,
       capitalInStreet,
       capitalCollectedMonth,
+      capitalInBox,
       interestEarnedMonth,
       totalInterestEarnedAllTime,
+      totalWithdrawnProfits,
+      availableProfits,
       totalCapitalCollectedAllTime,
     };
   }
@@ -81,14 +101,19 @@ export async function getCapitalMetrics(period?: string): Promise<CapitalMetrics
   let totalInjected = 0;
   let totalWithdrawnCapital = 0;
   let totalWithdrawnProfits = 0;
+  let totalSpentFromCapital = 0;
+  let totalRestoredCapital = 0;
 
   for (const m of (movements as any[])) {
     if (m.type === 'inyeccion') totalInjected += m.amount;
     else if (m.type === 'retiro_capital') totalWithdrawnCapital += m.amount;
     else if (m.type === 'retiro_utilidad') totalWithdrawnProfits += m.amount;
+    else if (m.type === 'gasto_capital') totalSpentFromCapital += m.amount;
+    else if (m.type === 'reposicion_capital') totalRestoredCapital += m.amount;
   }
 
-  const netCapitalBase = totalInjected - totalWithdrawnCapital;
+  const netCapitalBase = Math.max(0, totalInjected - totalWithdrawnCapital);
+  const pendingToRestore = Math.max(0, totalSpentFromCapital - totalRestoredCapital);
   const capitalInStreet = (activeLoans as any[]).reduce((sum: number, l: any) => sum + l.currentCapital, 0);
 
   let capitalCollectedMonth = 0;
@@ -106,15 +131,23 @@ export async function getCapitalMetrics(period?: string): Promise<CapitalMetrics
     }
   }
 
+  const availableProfits = Math.max(0, totalInterestEarnedAllTime - totalWithdrawnProfits);
+  const capitalInBox = Math.max(0, netCapitalBase - capitalInStreet - pendingToRestore);
+
   return {
     totalInjected,
     totalWithdrawnCapital,
-    totalWithdrawnProfits,
     netCapitalBase,
+    totalSpentFromCapital,
+    totalRestoredCapital,
+    pendingToRestore,
     capitalInStreet,
     capitalCollectedMonth,
+    capitalInBox,
     interestEarnedMonth,
     totalInterestEarnedAllTime,
+    totalWithdrawnProfits,
+    availableProfits,
     totalCapitalCollectedAllTime,
   };
 }

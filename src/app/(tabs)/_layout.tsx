@@ -12,8 +12,8 @@ import { fonts, radii, shadows } from '@/lib/theme';
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
-  const bottomPadding = Math.max(insets.bottom, Platform.OS === 'web' ? 14 : 12);
-  const tabHeight = Platform.OS === 'web' ? 74 : 62 + insets.bottom;
+  const bottomPadding = Platform.OS === 'web' ? 26 : Math.max(insets.bottom, 14);
+  const tabHeight = Platform.OS === 'web' ? 84 : 64 + insets.bottom;
 
   return (
     <Tabs
@@ -26,16 +26,20 @@ export default function TabLayout() {
           borderTopColor: colors.border,
           borderTopWidth: 1,
           height: tabHeight,
-          paddingTop: 6,
+          paddingTop: 8,
           paddingBottom: bottomPadding,
           ...shadows.sm,
+        },
+        tabBarItemStyle: {
+          justifyContent: 'center',
+          alignItems: 'center',
         },
         tabBarLabelStyle: {
           fontFamily: fonts.bold,
           fontSize: 11,
           fontWeight: '700',
           marginTop: 2,
-          marginBottom: Platform.OS === 'web' ? 2 : 0,
+          marginBottom: Platform.OS === 'web' ? 6 : 0,
         },
       }}
     >

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, StyleSheet, Text, View } from 'react-native';
 import { Stack } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -30,11 +30,13 @@ export default function RootLayout() {
   // Inicializar PIN y Auto-backup
   useEffect(() => {
     void initPin();
-    void respaldarSiHaceFalta();
+    if (Platform.OS !== 'web') {
+      void respaldarSiHaceFalta();
+    }
   }, []);
 
   const { success, error } = useDbMigrations();
-  const [bootstrapped, setBootstrapped] = useState(false);
+  const [bootstrapped, setBootstrapped] = useState(Platform.OS === 'web');
   const { state: updateState, apply: applyUpdate } = useOtaUpdate();
 
   const [fontsLoaded] = useFonts({
@@ -47,18 +49,27 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
+    if (Platform.OS === 'web') {
+      setBootstrapped(true);
+      void seedIfEmpty();
+      return;
+    }
+
     if (!success) return;
     (async () => {
       try {
         await enableWalMode();
         await seedIfEmpty();
-        // Sincronizar con Supabase en background
         void syncAll();
+      } catch (err) {
+        console.warn('[boot error]', err);
       } finally {
         setBootstrapped(true);
       }
     })();
   }, [success]);
+
+  const isReady = bootstrapped && (fontsLoaded || Platform.OS === 'web');
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.background }}>
@@ -67,7 +78,7 @@ export default function RootLayout() {
           <StatusBar style="dark" />
           {error ? (
             <BootError message={error.message} />
-          ) : !bootstrapped || !fontsLoaded ? (
+          ) : !isReady ? (
             <BootLoading />
           ) : updateState.status === 'available' ||
             updateState.status === 'applying' ||

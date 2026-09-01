@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { Directory, File, Paths } from 'expo-file-system';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { buildBackup } from './backup';
@@ -6,10 +7,15 @@ const LAST_AUTO_BACKUP_KEY = '@tay:lastAutoBackupAt';
 const CARPETA = 'respaldos';
 const MAX_BACKUP_COPIES = 7;
 
-function carpeta(): Directory {
-  const d = new Directory(Paths.document, CARPETA);
-  if (!d.exists) d.create({ intermediates: true });
-  return d;
+function carpeta(): Directory | null {
+  if (Platform.OS === 'web') return null;
+  try {
+    const d = new Directory(Paths.document, CARPETA);
+    if (!d.exists) d.create({ intermediates: true });
+    return d;
+  } catch {
+    return null;
+  }
 }
 
 function hoyIso(): string {
@@ -17,16 +23,20 @@ function hoyIso(): string {
 }
 
 export async function respaldarSiHaceFalta(): Promise<string | null> {
+  if (Platform.OS === 'web') return null;
   try {
     const hoy = hoyIso();
     if ((await AsyncStorage.getItem(LAST_AUTO_BACKUP_KEY)) === hoy) return null;
+
+    const dir = carpeta();
+    if (!dir) return null;
 
     const datos = await buildBackup();
     if (datos.data.clients.length === 0 && datos.data.loans.length === 0) {
       return null;
     }
 
-    const archivo = new File(carpeta(), `respaldo-${hoy}.json`);
+    const archivo = new File(dir, `respaldo-${hoy}.json`);
     if (archivo.exists) archivo.delete();
     archivo.create();
     archivo.write(JSON.stringify(datos));
@@ -41,8 +51,11 @@ export async function respaldarSiHaceFalta(): Promise<string | null> {
 }
 
 function limpiarViejos(): void {
+  if (Platform.OS === 'web') return;
   try {
-    const archivos = carpeta()
+    const dir = carpeta();
+    if (!dir) return;
+    const archivos = dir
       .list()
       .filter((f) => f.name.startsWith('respaldo-'))
       .sort((a, b) => b.name.localeCompare(a.name));
@@ -55,8 +68,11 @@ function limpiarViejos(): void {
 export type CopiaLocal = { nombre: string; uri: string; fecha: string; tamano: number };
 
 export function copiasLocales(): CopiaLocal[] {
+  if (Platform.OS === 'web') return [];
   try {
-    return carpeta()
+    const dir = carpeta();
+    if (!dir) return [];
+    return dir
       .list()
       .filter((f) => f.name.startsWith('respaldo-') && f instanceof File)
       .map((f) => ({

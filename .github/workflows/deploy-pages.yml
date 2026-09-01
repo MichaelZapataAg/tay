@@ -36,6 +36,11 @@ jobs:
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL || 'https://qhqmopbxxtnxpchhibto.supabase.co' }}
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_OU9hCaYTS8GFkoKudFrAAw_yryBi6Ld' }}
 
+      - name: Prepare GitHub Pages Static (SPA + NoJekyll)
+        run: |
+          touch ./dist/.nojekyll
+          cp ./dist/index.html ./dist/404.html
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { sql } from 'drizzle-orm';
@@ -48,8 +49,20 @@ export async function exportAndShareBackup(): Promise<void> {
   try {
     const backup = await buildBackup();
     const json = JSON.stringify(backup, null, 2);
-
     const filename = `respaldo-tay-${new Date().toISOString().slice(0, 10)}.json`;
+
+    if (Platform.OS === 'web') {
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Respaldo descargado', 'Se descargó el archivo JSON en tu navegador.');
+      return;
+    }
+
     const file = new File(Paths.cache, filename);
     if (file.exists) file.delete();
     file.create();

@@ -1,19 +1,19 @@
 import { Tabs } from 'expo-router';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   CalendarCheck,
   HandCoins,
   Users,
   Wallet,
-  Sparkles,
 } from 'lucide-react-native';
 import { colors } from '@/lib/colors';
-import { fonts, radii, shadows, spacing } from '@/lib/theme';
+import { fonts, radii, shadows } from '@/lib/theme';
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
-  const bottomPadding = Math.max(insets.bottom, 12);
+  const bottomPadding = Math.max(insets.bottom, Platform.OS === 'web' ? 14 : 12);
+  const tabHeight = Platform.OS === 'web' ? 74 : 62 + insets.bottom;
 
   return (
     <Tabs
@@ -25,15 +25,17 @@ export default function TabLayout() {
           backgroundColor: '#FFFFFF',
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          height: 64 + bottomPadding,
-          paddingTop: 10,
+          height: tabHeight,
+          paddingTop: 6,
           paddingBottom: bottomPadding,
           ...shadows.sm,
         },
         tabBarLabelStyle: {
           fontFamily: fonts.bold,
-          fontSize: 12,
-          marginTop: 4,
+          fontSize: 11,
+          fontWeight: '700',
+          marginTop: 2,
+          marginBottom: Platform.OS === 'web' ? 2 : 0,
         },
       }}
     >
@@ -43,7 +45,7 @@ export default function TabLayout() {
           title: 'Cobros Hoy',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconPill, focused && styles.iconPillActive]}>
-              <CalendarCheck size={22} color={focused ? colors.primaryDark : color} />
+              <CalendarCheck size={20} color={focused ? colors.primaryDark : color} />
             </View>
           ),
         }}
@@ -54,7 +56,7 @@ export default function TabLayout() {
           title: 'Préstamos',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconPill, focused && styles.iconPillActive]}>
-              <HandCoins size={22} color={focused ? colors.primaryDark : color} />
+              <HandCoins size={20} color={focused ? colors.primaryDark : color} />
             </View>
           ),
         }}
@@ -65,7 +67,7 @@ export default function TabLayout() {
           title: 'Clientes',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconPill, focused && styles.iconPillActive]}>
-              <Users size={22} color={focused ? colors.primaryDark : color} />
+              <Users size={20} color={focused ? colors.primaryDark : color} />
             </View>
           ),
         }}
@@ -76,7 +78,7 @@ export default function TabLayout() {
           title: 'Caja & Capital',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconPill, focused && styles.iconPillActive]}>
-              <Wallet size={22} color={focused ? colors.primaryDark : color} />
+              <Wallet size={20} color={focused ? colors.primaryDark : color} />
             </View>
           ),
         }}
@@ -87,8 +89,8 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   iconPill: {
-    paddingVertical: 4,
-    paddingHorizontal: 16,
+    paddingVertical: 2,
+    paddingHorizontal: 12,
     borderRadius: radii.full,
     alignItems: 'center',
     justifyContent: 'center',

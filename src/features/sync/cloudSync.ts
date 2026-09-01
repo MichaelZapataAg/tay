@@ -27,6 +27,28 @@ export async function syncAll(): Promise<void> {
   }
 }
 
+export async function clearAllLocalAndCloudData(): Promise<void> {
+  if (Platform.OS !== 'web') {
+    try {
+      await db.delete(payments);
+      await db.delete(loans);
+      await db.delete(clients);
+      await db.delete(capitalMovements);
+      await db.delete(expenses);
+    } catch (e) {
+      console.warn('[clear local]', e);
+    }
+  }
+
+  await supabase.from('payments').delete().neq('id', '0');
+  await supabase.from('loans').delete().neq('id', '0');
+  await supabase.from('clients').delete().neq('id', '0');
+  await supabase.from('capital_movements').delete().neq('id', '0');
+  await supabase.from('expenses').delete().neq('id', '0');
+
+  queryClient.invalidateQueries();
+}
+
 async function pullFromCloud(): Promise<void> {
   try {
     const nowIso = new Date().toISOString();
@@ -69,7 +91,6 @@ async function pullFromCloud(): Promise<void> {
     }
 
     if (lRes.data && lRes.data.length > 0) {
-      // Lookup client name map
       const clientMap = new Map((cRes.data || []).map((c: any) => [c.id, c.name]));
 
       for (const row of lRes.data) {

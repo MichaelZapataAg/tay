@@ -444,6 +444,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: spacing[4],
     paddingTop: spacing[4],
+    paddingBottom: 120,
   },
   clientCard: {
     backgroundColor: '#FFFFFF',

@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { View, StyleSheet, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   CalendarCheck,
@@ -8,11 +8,10 @@ import {
   Wallet,
 } from 'lucide-react-native';
 import { colors } from '@/lib/colors';
-import { fonts, radii, shadows } from '@/lib/theme';
+import { fonts } from '@/lib/theme';
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
-  const isWeb = Platform.OS === 'web';
 
   return (
     <Tabs
@@ -20,41 +19,18 @@ export default function TabLayout() {
         headerShown: false,
         tabBarActiveTintColor: colors.primaryDark,
         tabBarInactiveTintColor: colors.inkLight,
-        tabBarStyle: isWeb
-          ? {
-              backgroundColor: '#FFFFFF',
-              position: 'absolute',
-              bottom: 68,
-              left: 12,
-              right: 12,
-              height: 62,
-              borderRadius: 24,
-              borderWidth: 1,
-              borderColor: colors.border,
-              paddingTop: 4,
-              paddingBottom: 4,
-              ...shadows.md,
-            }
-          : {
-              backgroundColor: '#FFFFFF',
-              borderTopColor: colors.border,
-              borderTopWidth: 1,
-              height: 60 + insets.bottom,
-              paddingTop: 6,
-              paddingBottom: Math.max(insets.bottom, 10),
-              ...shadows.sm,
-            },
-        tabBarItemStyle: {
-          justifyContent: 'center',
-          alignItems: 'center',
-          paddingVertical: 1,
+        tabBarStyle: {
+          backgroundColor: '#FFFFFF',
+          borderTopColor: colors.border,
+          borderTopWidth: 1,
+          height: Platform.OS === 'web' ? 64 : 54 + insets.bottom,
+          paddingTop: 6,
+          paddingBottom: Platform.OS === 'web' ? 10 : insets.bottom || 8,
         },
         tabBarLabelStyle: {
           fontFamily: fonts.bold,
-          fontSize: 10.5,
+          fontSize: 11,
           fontWeight: '700',
-          marginTop: 1,
-          marginBottom: 1,
         },
       }}
     >
@@ -62,59 +38,30 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Cobros Hoy',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconPill, focused && styles.iconPillActive]}>
-              <CalendarCheck size={19} color={focused ? colors.primaryDark : color} />
-            </View>
-          ),
+          tabBarIcon: ({ color }) => <CalendarCheck size={22} color={color} />,
         }}
       />
       <Tabs.Screen
         name="prestamos"
         options={{
           title: 'Préstamos',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconPill, focused && styles.iconPillActive]}>
-              <HandCoins size={19} color={focused ? colors.primaryDark : color} />
-            </View>
-          ),
+          tabBarIcon: ({ color }) => <HandCoins size={22} color={color} />,
         }}
       />
       <Tabs.Screen
         name="clientes"
         options={{
           title: 'Clientes',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconPill, focused && styles.iconPillActive]}>
-              <Users size={19} color={focused ? colors.primaryDark : color} />
-            </View>
-          ),
+          tabBarIcon: ({ color }) => <Users size={22} color={color} />,
         }}
       />
       <Tabs.Screen
         name="capital"
         options={{
           title: 'Caja & Capital',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconPill, focused && styles.iconPillActive]}>
-              <Wallet size={19} color={focused ? colors.primaryDark : color} />
-            </View>
-          ),
+          tabBarIcon: ({ color }) => <Wallet size={22} color={color} />,
         }}
       />
     </Tabs>
   );
 }
-
-const styles = StyleSheet.create({
-  iconPill: {
-    paddingVertical: 2,
-    paddingHorizontal: 10,
-    borderRadius: radii.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconPillActive: {
-    backgroundColor: colors.primarySoft,
-  },
-});

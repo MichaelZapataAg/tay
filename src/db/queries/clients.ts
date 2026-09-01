@@ -91,10 +91,10 @@ export async function getAllClients(search?: string): Promise<ClientWithDebt[]> 
     .from(loans)
     .where(eq(loans.status, 'activo'));
 
-  const result: ClientWithDebt[] = allClients.map((client) => {
-    const clientLoans = activeLoans.filter((l) => l.clientId === client.id);
+  const result: ClientWithDebt[] = (allClients as any[]).map((client: any) => {
+    const clientLoans = (activeLoans as any[]).filter((l: any) => l.clientId === client.id);
     const activeLoansCount = clientLoans.length;
-    const totalCurrentCapital = clientLoans.reduce((sum, l) => sum + l.currentCapital, 0);
+    const totalCurrentCapital = clientLoans.reduce((sum: number, l: any) => sum + l.currentCapital, 0);
 
     let totalInterestDueSoon = 0;
     let hasOverdueLoan = false;

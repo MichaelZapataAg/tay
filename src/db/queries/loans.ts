@@ -117,10 +117,10 @@ export async function getAllLoans(options?: {
 
   const allPayments = await db.select().from(payments);
 
-  const result: LoanWithDetails[] = allLoans.map(({ loan, client }) => {
-    const loanPayments = allPayments.filter((p) => p.loanId === loan.id);
-    const totalPaidInterest = loanPayments.reduce((sum, p) => sum + p.interestAmount, 0);
-    const totalPaidCapital = loanPayments.reduce((sum, p) => sum + p.capitalAmount, 0);
+  const result: LoanWithDetails[] = (allLoans as any[]).map(({ loan, client }: any) => {
+    const loanPayments = (allPayments as any[]).filter((p: any) => p.loanId === loan.id);
+    const totalPaidInterest = loanPayments.reduce((sum: number, p: any) => sum + p.interestAmount, 0);
+    const totalPaidCapital = loanPayments.reduce((sum: number, p: any) => sum + p.capitalAmount, 0);
 
     const interestAmountPerPeriod = Math.round((loan.currentCapital * loan.interestRate) / 100);
 

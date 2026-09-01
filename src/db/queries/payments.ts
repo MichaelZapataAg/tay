@@ -64,7 +64,7 @@ export async function getAllPayments(options?: {
 
   const all = await query;
 
-  let result: PaymentWithDetails[] = all.map(({ payment, client }) => ({
+  let result: PaymentWithDetails[] = (all as any[]).map(({ payment, client }: any) => ({
     ...payment,
     clientName: client?.name || 'Cliente',
     clientAlias: client?.alias,

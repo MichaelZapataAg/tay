@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { db } from '@/db/client';
 import { clients, loans, payments, capitalMovements, expenses } from '@/db/schema';
 import { supabase } from '@/lib/supabase';
@@ -6,6 +7,7 @@ import { queryClient } from '@/lib/queryClient';
 let isSyncing = false;
 
 export async function syncAll(): Promise<void> {
+  if (Platform.OS === 'web') return;
   if (isSyncing) return;
   isSyncing = true;
 
@@ -178,7 +180,7 @@ async function pushToCloud(): Promise<void> {
 
     if (allClients.length > 0) {
       await supabase.from('clients').upsert(
-        allClients.map((c) => ({
+        allClients.map((c: any) => ({
           id: c.id,
           name: c.name,
           alias: c.alias,
@@ -193,7 +195,7 @@ async function pushToCloud(): Promise<void> {
 
     if (allLoans.length > 0) {
       await supabase.from('loans').upsert(
-        allLoans.map((l) => ({
+        allLoans.map((l: any) => ({
           id: l.id,
           client_id: l.clientId,
           initial_amount: l.initialAmount,
@@ -212,7 +214,7 @@ async function pushToCloud(): Promise<void> {
 
     if (allPayments.length > 0) {
       await supabase.from('payments').upsert(
-        allPayments.map((p) => ({
+        allPayments.map((p: any) => ({
           id: p.id,
           loan_id: p.loanId,
           client_id: p.clientId,
@@ -230,7 +232,7 @@ async function pushToCloud(): Promise<void> {
 
     if (allMovements.length > 0) {
       await supabase.from('capital_movements').upsert(
-        allMovements.map((m) => ({
+        allMovements.map((m: any) => ({
           id: m.id,
           type: m.type,
           amount: m.amount,
@@ -243,7 +245,7 @@ async function pushToCloud(): Promise<void> {
 
     if (allExpenses.length > 0) {
       await supabase.from('expenses').upsert(
-        allExpenses.map((e) => ({
+        allExpenses.map((e: any) => ({
           id: e.id,
           category: e.category,
           amount: e.amount,

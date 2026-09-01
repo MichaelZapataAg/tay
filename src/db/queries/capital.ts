@@ -82,21 +82,21 @@ export async function getCapitalMetrics(period?: string): Promise<CapitalMetrics
   let totalWithdrawnCapital = 0;
   let totalWithdrawnProfits = 0;
 
-  for (const m of movements) {
+  for (const m of (movements as any[])) {
     if (m.type === 'inyeccion') totalInjected += m.amount;
     else if (m.type === 'retiro_capital') totalWithdrawnCapital += m.amount;
     else if (m.type === 'retiro_utilidad') totalWithdrawnProfits += m.amount;
   }
 
   const netCapitalBase = totalInjected - totalWithdrawnCapital;
-  const capitalInStreet = activeLoans.reduce((sum, l) => sum + l.currentCapital, 0);
+  const capitalInStreet = (activeLoans as any[]).reduce((sum: number, l: any) => sum + l.currentCapital, 0);
 
   let capitalCollectedMonth = 0;
   let interestEarnedMonth = 0;
   let totalInterestEarnedAllTime = 0;
   let totalCapitalCollectedAllTime = 0;
 
-  for (const p of allPayments) {
+  for (const p of (allPayments as any[])) {
     totalInterestEarnedAllTime += p.interestAmount;
     totalCapitalCollectedAllTime += p.capitalAmount;
 

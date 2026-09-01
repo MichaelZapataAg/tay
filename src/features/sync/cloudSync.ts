@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import { eq } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { clients, loans, payments, capitalMovements, expenses } from '@/db/schema';
 import { supabase } from '@/lib/supabase';
@@ -59,6 +60,17 @@ async function pullFromCloud(): Promise<void> {
       supabase.from('capital_movements').select('*'),
       supabase.from('expenses').select('*'),
     ]);
+
+    // Check if cloud was wiped or if demo client exists locally
+    const demoClients = await db.select().from(clients).where(eq(clients.name, 'Carlos Mendoza'));
+    if ((cRes.data && cRes.data.length === 0) || (demoClients && demoClients.length > 0)) {
+      await db.delete(payments);
+      await db.delete(loans);
+      await db.delete(clients);
+      await db.delete(capitalMovements);
+      await db.delete(expenses);
+      if (cRes.data && cRes.data.length === 0) return;
+    }
 
     if (cRes.data && cRes.data.length > 0) {
       for (const row of cRes.data) {

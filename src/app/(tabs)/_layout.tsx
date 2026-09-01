@@ -12,8 +12,7 @@ import { fonts, radii, shadows } from '@/lib/theme';
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
-  const bottomPadding = Platform.OS === 'web' ? 26 : Math.max(insets.bottom, 14);
-  const tabHeight = Platform.OS === 'web' ? 84 : 64 + insets.bottom;
+  const isWeb = Platform.OS === 'web';
 
   return (
     <Tabs
@@ -21,25 +20,40 @@ export default function TabLayout() {
         headerShown: false,
         tabBarActiveTintColor: colors.primaryDark,
         tabBarInactiveTintColor: colors.inkLight,
-        tabBarStyle: {
-          backgroundColor: '#FFFFFF',
-          borderTopColor: colors.border,
-          borderTopWidth: 1,
-          height: tabHeight,
-          paddingTop: 8,
-          paddingBottom: bottomPadding,
-          ...shadows.sm,
-        },
+        tabBarStyle: isWeb
+          ? {
+              backgroundColor: '#FFFFFF',
+              position: 'absolute',
+              bottom: 12,
+              left: 12,
+              right: 12,
+              height: 64,
+              borderRadius: 22,
+              borderWidth: 1,
+              borderColor: colors.border,
+              paddingTop: 6,
+              paddingBottom: 6,
+              ...shadows.md,
+            }
+          : {
+              backgroundColor: '#FFFFFF',
+              borderTopColor: colors.border,
+              borderTopWidth: 1,
+              height: 60 + insets.bottom,
+              paddingTop: 6,
+              paddingBottom: Math.max(insets.bottom, 10),
+              ...shadows.sm,
+            },
         tabBarItemStyle: {
           justifyContent: 'center',
           alignItems: 'center',
+          paddingVertical: 2,
         },
         tabBarLabelStyle: {
           fontFamily: fonts.bold,
           fontSize: 11,
           fontWeight: '700',
           marginTop: 2,
-          marginBottom: Platform.OS === 'web' ? 6 : 0,
         },
       }}
     >

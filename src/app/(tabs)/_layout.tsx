@@ -23,14 +23,17 @@ export default function TabLayout() {
           backgroundColor: '#FFFFFF',
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          height: Platform.OS === 'web' ? 64 : 54 + insets.bottom,
-          paddingTop: 6,
-          paddingBottom: Platform.OS === 'web' ? 10 : insets.bottom || 8,
+          height: Platform.OS === 'web' ? 92 : 56 + insets.bottom,
+        },
+        tabBarItemStyle: {
+          justifyContent: 'flex-start',
+          paddingTop: 8,
         },
         tabBarLabelStyle: {
           fontFamily: fonts.bold,
           fontSize: 11,
           fontWeight: '700',
+          marginTop: 2,
         },
       }}
     >

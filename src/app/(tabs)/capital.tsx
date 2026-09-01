@@ -118,7 +118,7 @@ export default function CapitalScreen() {
             <View style={styles.debtAlertHeader}>
               <View style={styles.debtAlertBadge}>
                 <AlertCircle size={16} color={colors.dueDark} style={{ marginRight: 4 }} />
-                <Text style={styles.debtAlertTitle}>Gastos pendientes por reponer al fondo</Text>
+                <Text style={styles.debtAlertTitle}>Gastos pendientes por reponer</Text>
               </View>
               <Pressable
                 onPress={() => openModalWithType('reposicion_capital')}
@@ -130,7 +130,7 @@ export default function CapitalScreen() {
             </View>
             <Text style={styles.debtAlertAmount}>{money(metrics?.pendingToRestore || 0)}</Text>
             <Text style={styles.debtAlertSub}>
-              Sacaste este dinero de tu capital para gastos. Cuando lo repongas, tu caja volverá a cuadrar.
+              Sacaste este dinero de tu fondo para gastos. Al reponerlo, tu capital disponible vuelve a cuadrar.
             </Text>
           </View>
         ) : null}
@@ -143,16 +143,16 @@ export default function CapitalScreen() {
         <View style={styles.capitalGrid}>
           {/* Fondo Total Activo */}
           <View style={styles.capitalGridItem}>
-            <Text style={styles.capitalGridLabel}>Fondo Total Activo:</Text>
+            <Text style={styles.capitalGridLabel}>Fondo Total:</Text>
             <Text style={styles.capitalGridVal}>{money(metrics?.netCapitalBase || 0)}</Text>
-            <Text style={styles.capitalGridSub}>Tu capital total propio</Text>
+            <Text style={styles.capitalGridSub}>Capital total propio</Text>
           </View>
 
           {/* Capital Disponible en Caja */}
           <View style={[styles.capitalGridItem, { backgroundColor: colors.todaySoft, borderColor: colors.todayBorder }]}>
             <Text style={[styles.capitalGridLabel, { color: colors.todayDark }]}>Disponible en Caja:</Text>
             <Text style={[styles.capitalGridVal, { color: colors.todayDark }]}>{money(metrics?.capitalInBox || 0)}</Text>
-            <Text style={[styles.capitalGridSub, { color: colors.todayDark }]}>En mano para prestar</Text>
+            <Text style={[styles.capitalGridSub, { color: colors.todayDark }]}>Listo para prestar</Text>
           </View>
 
           {/* Capital en la Calle */}
@@ -170,30 +170,56 @@ export default function CapitalScreen() {
           </View>
         </View>
 
-        {/* BOTONES DE ACCIONES RÁPIDAS DE CAPITAL */}
-        <View style={styles.actionButtonsRow}>
+        {/* ACCIONES DE CAPITAL (DISTRIBUCIÓN ELEGANTE Y ESPACIOSA) */}
+        <View style={styles.actionContainer}>
+          {/* Botón Principal: + Inyectar Capital */}
           <Pressable
             onPress={() => openModalWithType('inyeccion')}
-            style={styles.actionBtnInyectar}
+            style={styles.btnPrimaryInyectar}
           >
-            <Plus size={16} color="#FFFFFF" style={{ marginRight: 4 }} />
-            <Text style={styles.actionBtnInyectarText}>+ Inyectar Capital</Text>
+            <View style={styles.btnPrimaryInyectarIcon}>
+              <Plus size={18} color={colors.primaryDark} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.btnPrimaryInyectarTitle}>+ Inyectar Capital</Text>
+              <Text style={styles.btnPrimaryInyectarSub}>Aportar dinero a mi fondo para prestar</Text>
+            </View>
           </Pressable>
 
-          <Pressable
-            onPress={() => openModalWithType('gasto_capital')}
-            style={styles.actionBtnGasto}
-          >
-            <ArrowDownLeft size={16} color={colors.dueDark} style={{ marginRight: 4 }} />
-            <Text style={styles.actionBtnGastoText}>- Gasto a Reponer</Text>
-          </Pressable>
+          {/* Fila con 2 tarjetas de acciones: Gasto vs Reponer */}
+          <View style={styles.actionCardsRow}>
+            {/* Gasto a reponer */}
+            <Pressable
+              onPress={() => openModalWithType('gasto_capital')}
+              style={styles.actionSubCardGasto}
+            >
+              <View style={styles.actionSubCardIconGasto}>
+                <ArrowDownLeft size={18} color={colors.dueDark} />
+              </View>
+              <Text style={styles.actionSubCardTitleGasto}>Gasto a Reponer</Text>
+              <Text style={styles.actionSubCardSubGasto}>Sacar del fondo</Text>
+            </Pressable>
 
+            {/* Reponer capital */}
+            <Pressable
+              onPress={() => openModalWithType('reposicion_capital')}
+              style={styles.actionSubCardReponer}
+            >
+              <View style={styles.actionSubCardIconReponer}>
+                <RotateCcw size={18} color={colors.todayDark} />
+              </View>
+              <Text style={styles.actionSubCardTitleReponer}>Reponer Dinero</Text>
+              <Text style={styles.actionSubCardSubReponer}>Devolver al fondo</Text>
+            </Pressable>
+          </View>
+
+          {/* Botón Secundario: Retirar Ganancia */}
           <Pressable
-            onPress={() => openModalWithType('reposicion_capital')}
-            style={styles.actionBtnReponer}
+            onPress={() => openModalWithType('retiro_utilidad')}
+            style={styles.btnRetirarGanancia}
           >
-            <RotateCcw size={16} color={colors.primaryDark} style={{ marginRight: 4 }} />
-            <Text style={styles.actionBtnReponerText}>🔄 Reponer</Text>
+            <Coins size={16} color={colors.inkSecondary} style={{ marginRight: 6 }} />
+            <Text style={styles.btnRetirarGananciaText}>Retirar Ganancias de Intereses</Text>
           </Pressable>
         </View>
 
@@ -518,7 +544,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing[2],
-    marginBottom: spacing[4],
+    marginBottom: spacing[3],
   },
   capitalGridItem: {
     width: '48.5%',
@@ -544,57 +570,122 @@ const styles = StyleSheet.create({
     color: colors.inkLight,
     marginTop: 2,
   },
-  actionButtonsRow: {
-    flexDirection: 'row',
-    gap: spacing[2],
+  actionContainer: {
     marginBottom: spacing[4],
+    gap: spacing[2],
   },
-  actionBtnInyectar: {
-    flex: 1,
+  btnPrimaryInyectar: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
     backgroundColor: colors.primary,
-    paddingVertical: spacing[3],
-    borderRadius: radii.lg,
+    paddingVertical: spacing[3] + 2,
+    paddingHorizontal: spacing[4],
+    borderRadius: radii.xl,
+    gap: spacing[3],
     ...shadows.sm,
   },
-  actionBtnInyectarText: {
-    fontFamily: fonts.bold,
-    fontSize: 12,
+  btnPrimaryInyectarIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: radii.full,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  btnPrimaryInyectarTitle: {
+    fontFamily: fonts.titleBold,
+    fontSize: 15,
     color: '#FFFFFF',
   },
-  actionBtnGasto: {
-    flex: 1,
+  btnPrimaryInyectarSub: {
+    ...type.micro,
+    color: 'rgba(255, 255, 255, 0.85)',
+    marginTop: 1,
+  },
+  actionCardsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.dueSoft,
-    borderWidth: 1,
+    gap: spacing[2],
+  },
+  actionSubCardGasto: {
+    flex: 1,
+    backgroundColor: '#FFF9FA',
+    borderWidth: 1.5,
     borderColor: colors.dueBorder,
+    borderRadius: radii.xl,
     paddingVertical: spacing[3],
-    borderRadius: radii.lg,
+    paddingHorizontal: spacing[2],
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadows.sm,
   },
-  actionBtnGastoText: {
+  actionSubCardIconGasto: {
+    width: 34,
+    height: 34,
+    borderRadius: radii.full,
+    backgroundColor: colors.dueSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  actionSubCardTitleGasto: {
     fontFamily: fonts.bold,
-    fontSize: 12,
+    fontSize: 13,
     color: colors.dueDark,
+    textAlign: 'center',
   },
-  actionBtnReponer: {
+  actionSubCardSubGasto: {
+    ...type.micro,
+    color: colors.dueDark,
+    marginTop: 2,
+    textAlign: 'center',
+  },
+  actionSubCardReponer: {
     flex: 1,
+    backgroundColor: '#FFFDF9',
+    borderWidth: 1.5,
+    borderColor: colors.todayBorder,
+    borderRadius: radii.xl,
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[2],
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadows.sm,
+  },
+  actionSubCardIconReponer: {
+    width: 34,
+    height: 34,
+    borderRadius: radii.full,
+    backgroundColor: colors.todaySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  actionSubCardTitleReponer: {
+    fontFamily: fonts.bold,
+    fontSize: 13,
+    color: colors.todayDark,
+    textAlign: 'center',
+  },
+  actionSubCardSubReponer: {
+    ...type.micro,
+    color: colors.todayDark,
+    marginTop: 2,
+    textAlign: 'center',
+  },
+  btnRetirarGanancia: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primarySubtle,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: colors.primarySoft,
+    borderColor: colors.border,
     paddingVertical: spacing[3],
     borderRadius: radii.lg,
   },
-  actionBtnReponerText: {
+  btnRetirarGananciaText: {
     fontFamily: fonts.bold,
     fontSize: 12,
-    color: colors.primaryDark,
+    color: colors.inkSecondary,
   },
   sectionHeaderRow: {
     flexDirection: 'row',

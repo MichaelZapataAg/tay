@@ -1,6 +1,8 @@
+import { Platform } from 'react-native';
 import { desc, eq, sql } from 'drizzle-orm';
 import { db } from '../client';
 import { payments, loans, clients, type Payment, type NewPayment } from '../schema';
+import { supabase } from '@/lib/supabase';
 import { newId } from '@/lib/id';
 import { scheduleLoanDueNotification, cancelLoanNotification } from '@/lib/notifications';
 
@@ -15,6 +17,42 @@ export async function getAllPayments(options?: {
   clientId?: string;
   period?: string; // YYYY-MM
 }): Promise<PaymentWithDetails[]> {
+  if (Platform.OS === 'web') {
+    const [pRes, cRes] = await Promise.all([
+      supabase.from('payments').select('*').order('created_at', { ascending: false }),
+      supabase.from('clients').select('*'),
+    ]);
+
+    const clientMap = new Map((cRes.data || []).map((c: any) => [c.id, c]));
+
+    let result: PaymentWithDetails[] = (pRes.data || []).map((row: any) => {
+      const client = clientMap.get(row.client_id);
+      return {
+        id: row.id,
+        loanId: row.loan_id,
+        clientId: row.client_id,
+        paidAt: row.created_at,
+        date: row.date,
+        periodCovered: row.notes,
+        interestAmount: row.interest_amount,
+        capitalAmount: row.capital_amount ?? 0,
+        totalAmount: row.total_amount,
+        paymentMethod: row.payment_method || 'efectivo',
+        receiptPhotoUri: row.receipt_photo_uri,
+        notes: row.notes,
+        createdAt: row.created_at,
+        clientName: client?.name || 'Cliente',
+        clientAlias: client?.alias,
+        clientPhone: client?.phone,
+      };
+    });
+
+    if (options?.loanId) result = result.filter((p) => p.loanId === options.loanId);
+    if (options?.clientId) result = result.filter((p) => p.clientId === options.clientId);
+    if (options?.period) result = result.filter((p) => p.date.startsWith(options.period!));
+    return result;
+  }
+
   const query = db
     .select({
       payment: payments,
@@ -48,9 +86,6 @@ export async function getAllPayments(options?: {
   return result;
 }
 
-/**
- * Calcula la siguiente fecha sumando los días de frecuencia (ej. +15 días)
- */
 export function calculateNextDueDate(currentDueDateStr: string, frequencyDays: number): string {
   const [y, m, d] = currentDueDateStr.split('-').map(Number);
   const date = new Date(y, m - 1, d);
@@ -74,16 +109,56 @@ export async function recordPayment(params: {
   nextDueDateOverride?: string;
   customPaidDate?: string;
 }) {
-  const [loan] = await db.select().from(loans).where(eq(loans.id, params.loanId));
-  if (!loan) throw new Error('Préstamo no encontrado');
-
   const now = new Date();
   const paidAt = now.toISOString();
   const dateStr = params.customPaidDate || paidAt.split('T')[0];
-
   const totalAmount = (params.interestAmount || 0) + (params.capitalAmount || 0);
-
   const paymentId = newId();
+
+  if (Platform.OS === 'web') {
+    const { data: loan } = await supabase.from('loans').select('*').eq('id', params.loanId).single();
+    if (!loan) throw new Error('Préstamo no encontrado');
+
+    const newPayment: any = {
+      id: paymentId,
+      loan_id: params.loanId,
+      client_id: params.clientId,
+      date: dateStr,
+      interest_amount: params.interestAmount || 0,
+      capital_amount: params.capitalAmount || 0,
+      total_amount: totalAmount,
+      payment_method: params.paymentMethod || 'efectivo',
+      receipt_photo_uri: params.receiptPhotoUri || null,
+      notes: params.notes || null,
+      created_at: paidAt,
+      updated_at: paidAt,
+    };
+
+    await supabase.from('payments').insert(newPayment);
+
+    const currentCapital = loan.current_capital ?? loan.initial_amount;
+    const newCapital = Math.max(0, currentCapital - (params.capitalAmount || 0));
+    const isFullyPaid = newCapital === 0;
+    const nextDueDate =
+      params.nextDueDateOverride ||
+      calculateNextDueDate(loan.next_due_date, loan.frequency_days || 15);
+
+    await supabase
+      .from('loans')
+      .update({
+        current_capital: newCapital,
+        next_due_date: isFullyPaid ? loan.next_due_date : nextDueDate,
+        status: isFullyPaid ? 'pagado' : 'activo',
+        updated_at: paidAt,
+      })
+      .eq('id', loan.id);
+
+    return { payment: newPayment, newCapital, isFullyPaid, nextDueDate };
+  }
+
+  const [loan] = await db.select().from(loans).where(eq(loans.id, params.loanId));
+  if (!loan) throw new Error('Préstamo no encontrado');
+
   const newPayment: NewPayment = {
     id: paymentId,
     loanId: params.loanId,
@@ -144,12 +219,30 @@ export async function recordPayment(params: {
 }
 
 export async function deletePayment(id: string) {
+  if (Platform.OS === 'web') {
+    const { data: payment } = await supabase.from('payments').select('*').eq('id', id).single();
+    if (!payment) return;
+    const { data: loan } = await supabase.from('loans').select('*').eq('id', payment.loan_id).single();
+    if (loan) {
+      const restoredCapital = (loan.current_capital || 0) + (payment.capital_amount || 0);
+      await supabase
+        .from('loans')
+        .update({
+          current_capital: restoredCapital,
+          status: 'activo',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', loan.id);
+    }
+    await supabase.from('payments').delete().eq('id', id);
+    return;
+  }
+
   const [payment] = await db.select().from(payments).where(eq(payments.id, id));
   if (!payment) return;
 
   const [loan] = await db.select().from(loans).where(eq(loans.id, payment.loanId));
   if (loan) {
-    // Reversar abono a capital
     const restoredCapital = loan.currentCapital + payment.capitalAmount;
     await db
       .update(loans)

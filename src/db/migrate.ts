@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 import { sql } from 'drizzle-orm';
 import migrations from './migrations/migrations';
-import { db, expoDb } from './client';
+import { db } from './client';
 
 declare global {
   // eslint-disable-next-line no-var
@@ -13,15 +14,16 @@ declare global {
 function getBootstrapState() {
   if (!globalThis.__tayBootstrap) {
     globalThis.__tayBootstrap = {
-      migrationsApplied: false,
-      walEnabled: false,
-      seeded: false,
+      migrationsApplied: Platform.OS === 'web',
+      walEnabled: Platform.OS === 'web',
+      seeded: Platform.OS === 'web',
     };
   }
   return globalThis.__tayBootstrap;
 }
 
 async function ensureColumn(tableName: string, columnName: string, definition: string) {
+  if (Platform.OS === 'web') return;
   try {
     const tableInfo = (await db.all(sql.raw(`PRAGMA table_info(\`${tableName}\`);`))) as {
       name: string;
@@ -39,6 +41,7 @@ async function ensureColumn(tableName: string, columnName: string, definition: s
  * Migrator manual con guard global resistente a HMR.
  */
 async function runMigrations() {
+  if (Platform.OS === 'web') return;
   const state = getBootstrapState();
   if (state.migrationsApplied) return;
 
@@ -102,6 +105,7 @@ async function runMigrations() {
 }
 
 export async function enableWalMode() {
+  if (Platform.OS === 'web') return;
   const state = getBootstrapState();
   if (state.walEnabled) return;
   const rows = (await db.all(sql`PRAGMA journal_mode;`)) as { journal_mode: string }[];
@@ -122,11 +126,15 @@ export type MigrationStatus = { success: boolean; error: Error | null };
 
 export function useDbMigrations(): MigrationStatus {
   const [status, setStatus] = useState<MigrationStatus>(() => ({
-    success: getBootstrapState().migrationsApplied,
+    success: Platform.OS === 'web' || getBootstrapState().migrationsApplied,
     error: null,
   }));
 
   useEffect(() => {
+    if (Platform.OS === 'web') {
+      setStatus({ success: true, error: null });
+      return;
+    }
     if (status.success) return;
     let cancelled = false;
     runMigrations()

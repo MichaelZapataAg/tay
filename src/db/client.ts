@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { drizzle } from 'drizzle-orm/expo-sqlite';
 import { openDatabaseSync, type SQLiteDatabase } from 'expo-sqlite';
 import * as schema from './schema';
@@ -12,10 +13,15 @@ declare global {
 function getExpoDb(): SQLiteDatabase {
   if (!globalThis.__tayExpoDb) {
     const sqliteDb = openDatabaseSync(DB_NAME, { enableChangeListener: true });
-    // PRAGMAs deben aplicarse ANTES de cualquier transacción
-    sqliteDb.execSync('PRAGMA journal_mode = WAL;');
-    sqliteDb.execSync('PRAGMA foreign_keys = ON;');
-    sqliteDb.execSync('PRAGMA synchronous = NORMAL;');
+    if (Platform.OS !== 'web') {
+      try {
+        sqliteDb.execSync('PRAGMA journal_mode = WAL;');
+        sqliteDb.execSync('PRAGMA foreign_keys = ON;');
+        sqliteDb.execSync('PRAGMA synchronous = NORMAL;');
+      } catch (err) {
+        console.warn('[db] Error running PRAGMAs:', err);
+      }
+    }
     globalThis.__tayExpoDb = sqliteDb;
   }
   return globalThis.__tayExpoDb;

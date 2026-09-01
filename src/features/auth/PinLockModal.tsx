@@ -1,20 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Modal,
   Pressable,
   StyleSheet,
   Text,
   View,
   SafeAreaView,
 } from 'react-native';
-import { Sparkles, Delete, Lock, ShieldCheck } from 'lucide-react-native';
-import { checkAndUnlock, usePinAuth } from './pinStore';
+import { Sparkles, Delete, ShieldCheck } from 'lucide-react-native';
+import { checkAndUnlock } from './pinStore';
 import { colors } from '@/lib/colors';
 import { fonts, radii, spacing, type, shadows } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 
 export function PinLockScreen() {
-  const { isUnlocked, isLoaded } = usePinAuth();
   const [pin, setPinState] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -50,73 +48,69 @@ export function PinLockScreen() {
     }
   };
 
-  if (!isLoaded || isUnlocked) return null;
-
   return (
-    <Modal visible={!isUnlocked} animationType="fade" transparent={false}>
-      <SafeAreaView style={styles.container}>
-        {/* Top Header */}
-        <View style={styles.header}>
-          <View style={styles.iconCircle}>
-            <Sparkles size={28} color={colors.primary} />
-          </View>
-          <Text style={styles.title}>Hola Tay ✨</Text>
-          <Text style={styles.subtitle}>Ingresa tu PIN de seguridad para acceder</Text>
+    <SafeAreaView style={styles.container}>
+      {/* Top Header */}
+      <View style={styles.header}>
+        <View style={styles.iconCircle}>
+          <Sparkles size={28} color={colors.primary} />
         </View>
+        <Text style={styles.title}>Hola Tay ✨</Text>
+        <Text style={styles.subtitle}>Ingresa tu PIN de seguridad para acceder</Text>
+      </View>
 
-        {/* PIN Indicators */}
-        <View style={styles.dotsContainer}>
-          {[0, 1, 2, 3].map((index) => {
-            const isFilled = pin.length > index;
-            return (
-              <View
-                key={index}
-                style={[
-                  styles.dot,
-                  isFilled && styles.dotFilled,
-                  !!errorMsg && styles.dotError,
-                ]}
-              />
-            );
-          })}
+      {/* PIN Indicators */}
+      <View style={styles.dotsContainer}>
+        {[0, 1, 2, 3].map((index) => {
+          const isFilled = pin.length > index;
+          return (
+            <View
+              key={index}
+              style={[
+                styles.dot,
+                isFilled && styles.dotFilled,
+                !!errorMsg && styles.dotError,
+              ]}
+            />
+          );
+        })}
+      </View>
+
+      {/* Error Message */}
+      {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
+
+      {/* Keypad */}
+      <View style={styles.keypad}>
+        <View style={styles.keypadRow}>
+          {['1', '2', '3'].map((d) => (
+            <KeypadButton key={d} digit={d} onPress={() => handlePressDigit(d)} />
+          ))}
         </View>
-
-        {/* Error Message */}
-        {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
-
-        {/* Keypad */}
-        <View style={styles.keypad}>
-          <View style={styles.keypadRow}>
-            {['1', '2', '3'].map((d) => (
-              <KeypadButton key={d} digit={d} onPress={() => handlePressDigit(d)} />
-            ))}
-          </View>
-          <View style={styles.keypadRow}>
-            {['4', '5', '6'].map((d) => (
-              <KeypadButton key={d} digit={d} onPress={() => handlePressDigit(d)} />
-            ))}
-          </View>
-          <View style={styles.keypadRow}>
-            {['7', '8', '9'].map((d) => (
-              <KeypadButton key={d} digit={d} onPress={() => handlePressDigit(d)} />
-            ))}
-          </View>
-          <View style={styles.keypadRow}>
-            <View style={styles.emptyKey} />
-            <KeypadButton digit="0" onPress={() => handlePressDigit('0')} />
-            <Pressable onPress={handleDeleteDigit} style={styles.deleteButton}>
-              <Delete size={26} color={colors.primaryDark} />
-            </Pressable>
-          </View>
+        <View style={styles.keypadRow}>
+          {['4', '5', '6'].map((d) => (
+            <KeypadButton key={d} digit={d} onPress={() => handlePressDigit(d)} />
+          ))}
         </View>
-
-        {/* Footer Security Badge */}
-        <View style={styles.securityBadge}>
-          <ShieldCheck size={16} color={colors.primaryDark} style={{ marginRight: 6 }} />
-          <Text style={styles.securityText}>Acceso 100% privado y protegido</Text>
+        <View style={styles.keypadRow}>
+          {['7', '8', '9'].map((d) => (
+            <KeypadButton key={d} digit={d} onPress={() => handlePressDigit(d)} />
+          ))}
         </View>
-      </SafeAreaView>
-    </Modal>
+        <View style={styles.keypadRow}>
+          <View style={styles.emptyKey} />
+          <KeypadButton digit="0" onPress={() => handlePressDigit('0')} />
+          <Pressable onPress={handleDeleteDigit} style={styles.deleteButton}>
+            <Delete size={26} color={colors.primaryDark} />
+          </Pressable>
+        </View>
+      </View>
+
+      {/* Footer Security Badge */}
+      <View style={styles.securityBadge}>
+        <ShieldCheck size={16} color={colors.primaryDark} style={{ marginRight: 6 }} />
+        <Text style={styles.securityText}>Acceso 100% privado y protegido</Text>
+      </View>
+    </SafeAreaView>
   );
 }
 

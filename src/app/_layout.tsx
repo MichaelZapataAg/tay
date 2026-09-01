@@ -22,7 +22,7 @@ import { useDbMigrations, enableWalMode } from '@/db/migrate';
 import { seedIfEmpty } from '@/db/seed';
 import { useOtaUpdate } from '@/lib/updates';
 import { Button } from '@/components/ui/Button';
-import { initPin } from '@/features/auth/pinStore';
+import { initPin, usePinAuth } from '@/features/auth/pinStore';
 import { PinLockScreen } from '@/features/auth/PinLockModal';
 import { syncAll } from '@/features/sync/cloudSync';
 
@@ -35,6 +35,7 @@ export default function RootLayout() {
     }
   }, []);
 
+  const { isUnlocked } = usePinAuth();
   const { success, error } = useDbMigrations();
   const [bootstrapped, setBootstrapped] = useState(Platform.OS === 'web');
   const { state: updateState, apply: applyUpdate } = useOtaUpdate();
@@ -88,19 +89,18 @@ export default function RootLayout() {
               errorMessage={updateState.status === 'error' ? updateState.message : null}
               onApply={applyUpdate}
             />
+          ) : !isUnlocked ? (
+            <PinLockScreen />
           ) : (
-            <>
-              <Stack
-                screenOptions={{
-                  headerShown: false,
-                  contentStyle: { backgroundColor: colors.background },
-                }}
-              >
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="ajustes" />
-              </Stack>
-              <PinLockScreen />
-            </>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: colors.background },
+              }}
+            >
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="ajustes" />
+            </Stack>
           )}
           <Toaster />
         </QueryClientProvider>

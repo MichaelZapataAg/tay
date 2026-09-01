@@ -218,6 +218,7 @@ const styles = StyleSheet.create({
   keyText: {
     fontFamily: fonts.titleBold,
     fontSize: 28,
+    fontWeight: '700',
     color: colors.ink,
   },
   emptyKey: {

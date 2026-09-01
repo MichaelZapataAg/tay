@@ -24,15 +24,15 @@ export default function TabLayout() {
           ? {
               backgroundColor: '#FFFFFF',
               position: 'absolute',
-              bottom: 12,
+              bottom: 68,
               left: 12,
               right: 12,
-              height: 64,
-              borderRadius: 22,
+              height: 62,
+              borderRadius: 24,
               borderWidth: 1,
               borderColor: colors.border,
-              paddingTop: 6,
-              paddingBottom: 6,
+              paddingTop: 4,
+              paddingBottom: 4,
               ...shadows.md,
             }
           : {
@@ -47,13 +47,14 @@ export default function TabLayout() {
         tabBarItemStyle: {
           justifyContent: 'center',
           alignItems: 'center',
-          paddingVertical: 2,
+          paddingVertical: 1,
         },
         tabBarLabelStyle: {
           fontFamily: fonts.bold,
-          fontSize: 11,
+          fontSize: 10.5,
           fontWeight: '700',
-          marginTop: 2,
+          marginTop: 1,
+          marginBottom: 1,
         },
       }}
     >
@@ -63,7 +64,7 @@ export default function TabLayout() {
           title: 'Cobros Hoy',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconPill, focused && styles.iconPillActive]}>
-              <CalendarCheck size={20} color={focused ? colors.primaryDark : color} />
+              <CalendarCheck size={19} color={focused ? colors.primaryDark : color} />
             </View>
           ),
         }}
@@ -74,7 +75,7 @@ export default function TabLayout() {
           title: 'Préstamos',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconPill, focused && styles.iconPillActive]}>
-              <HandCoins size={20} color={focused ? colors.primaryDark : color} />
+              <HandCoins size={19} color={focused ? colors.primaryDark : color} />
             </View>
           ),
         }}
@@ -85,7 +86,7 @@ export default function TabLayout() {
           title: 'Clientes',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconPill, focused && styles.iconPillActive]}>
-              <Users size={20} color={focused ? colors.primaryDark : color} />
+              <Users size={19} color={focused ? colors.primaryDark : color} />
             </View>
           ),
         }}
@@ -96,7 +97,7 @@ export default function TabLayout() {
           title: 'Caja & Capital',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconPill, focused && styles.iconPillActive]}>
-              <Wallet size={20} color={focused ? colors.primaryDark : color} />
+              <Wallet size={19} color={focused ? colors.primaryDark : color} />
             </View>
           ),
         }}
@@ -108,7 +109,7 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   iconPill: {
     paddingVertical: 2,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     borderRadius: radii.full,
     alignItems: 'center',
     justifyContent: 'center',

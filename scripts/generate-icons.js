@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Generador de íconos para Tay Préstamos a partir de iconTay.png
+ * Generador de íconos para Tay Préstamos preservando transparencia
  */
 const sharp = require('sharp');
 const path = require('path');
@@ -18,9 +18,7 @@ const IOS_ICON_PATH = path.join(
   'App-Icon-1024x1024@1x.png'
 );
 
-if (!fs.existsSync(ASSETS_DIR)) {
-  fs.mkdirSync(ASSETS_DIR, { recursive: true });
-}
+const PASTEL_LILA_BG = { r: 245, g: 243, b: 255, alpha: 1 }; // #F5F3FF
 
 async function processIcons() {
   if (!fs.existsSync(SOURCE)) {
@@ -28,52 +26,74 @@ async function processIcons() {
     return;
   }
 
-  console.log('Processing icon from:', SOURCE);
+  console.log('Generating transparent icons from:', SOURCE);
 
-  // 1. App Icon principal (1024x1024)
+  // 1. Favicon: 100% TRANSPARENTE
   await sharp(SOURCE)
-    .resize(1024, 1024, { fit: 'cover' })
-    .png()
-    .toFile(path.join(ASSETS_DIR, 'icon.png'));
-  console.log('✓ assets/icon.png (1024x1024)');
-
-  // 2. iOS AppIcon Catalog (1024x1024)
-  if (fs.existsSync(path.dirname(IOS_ICON_PATH))) {
-    await sharp(SOURCE)
-      .resize(1024, 1024, { fit: 'cover' })
-      .png()
-      .toFile(IOS_ICON_PATH);
-    console.log('✓ iOS AppIcon Catalog (1024x1024)');
-  }
-
-  // 3. Favicon (196x196)
-  await sharp(SOURCE)
-    .resize(196, 196, { fit: 'cover' })
+    .resize(196, 196, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .png()
     .toFile(path.join(ASSETS_DIR, 'favicon.png'));
-  console.log('✓ assets/favicon.png (196x196)');
+  console.log('✓ assets/favicon.png (100% transparente)');
 
-  // 4. Splash Icon (512x512)
+  // 2. Splash icon: 100% TRANSPARENTE
   await sharp(SOURCE)
     .resize(512, 512, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .png()
     .toFile(path.join(ASSETS_DIR, 'splash-icon.png'));
-  console.log('✓ assets/splash-icon.png (512x512)');
+  console.log('✓ assets/splash-icon.png (100% transparente)');
 
-  // 5. Android Foreground (1024x1024)
+  // 3. Android foreground: 100% TRANSPARENTE
   await sharp(SOURCE)
-    .resize(1024, 1024, { fit: 'cover' })
+    .resize(512, 512, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .extend({
+      top: 256,
+      bottom: 256,
+      left: 256,
+      right: 256,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    })
+    .resize(1024, 1024)
     .png()
     .toFile(path.join(ASSETS_DIR, 'android-icon-foreground.png'));
-  console.log('✓ assets/android-icon-foreground.png');
+  console.log('✓ assets/android-icon-foreground.png (100% transparente)');
 
-  // 6. Android Monochrome (1024x1024)
-  await sharp(SOURCE)
-    .resize(1024, 1024, { fit: 'cover' })
-    .grayscale()
+  // 4. Android background: Fondo pastel suave
+  await sharp({
+    create: {
+      width: 1024,
+      height: 1024,
+      channels: 4,
+      background: PASTEL_LILA_BG,
+    },
+  })
     .png()
-    .toFile(path.join(ASSETS_DIR, 'android-icon-monochrome.png'));
-  console.log('✓ assets/android-icon-monochrome.png');
+    .toFile(path.join(ASSETS_DIR, 'android-icon-background.png'));
+  console.log('✓ assets/android-icon-background.png (Lila pastel #F5F3FF)');
+
+  // 5. iOS / App Icon (Apple exige fondo sin canal alfa para la App Store y home screen)
+  // Componemos el ícono transparente sobre el fondo lila pastel suave (#F5F3FF) con aire
+  const resizedInner = await sharp(SOURCE)
+    .resize(860, 860, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .toBuffer();
+
+  const iosAppIcon = await sharp({
+    create: {
+      width: 1024,
+      height: 1024,
+      channels: 4,
+      background: PASTEL_LILA_BG,
+    },
+  })
+    .composite([{ input: resizedInner, gravity: 'center' }])
+    .png();
+
+  await iosAppIcon.toFile(path.join(ASSETS_DIR, 'icon.png'));
+  console.log('✓ assets/icon.png (Ícono sobre fondo lila pastel #F5F3FF)');
+
+  if (fs.existsSync(path.dirname(IOS_ICON_PATH))) {
+    await iosAppIcon.toFile(IOS_ICON_PATH);
+    console.log('✓ iOS AppIcon Catalog');
+  }
 
   console.log('All icons generated successfully!');
 }

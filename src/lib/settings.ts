@@ -5,7 +5,7 @@ export interface TaySettings {
   ownerName: string;
   phone: string;
   defaultInterestRate: number;
-  defaultFrequency: 'quincenal' | 'mensual' | 'semanal' | 'personalizado_dias';
+  defaultFrequency: 'quincenal' | 'cada_20_dias' | 'mensual' | 'semanal' | 'personalizado_dias';
   defaultFrequencyDays: number;
   paymentAccounts: string;
   notificationHour: number; // 8 = 8:00 AM

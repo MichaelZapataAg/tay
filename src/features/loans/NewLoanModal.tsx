@@ -41,13 +41,15 @@ export function NewLoanModal({
   const [initialAmount, setInitialAmount] = useState<number>(1_000_000);
   const [interestRate, setInterestRate] = useState<number>(settings.defaultInterestRate || 15);
   const [customRateText, setCustomRateText] = useState('');
-  const [paymentFrequency, setPaymentFrequency] = useState<'quincenal' | 'mensual' | 'semanal' | 'personalizado_dias'>('quincenal');
-  const [frequencyDays, setFrequencyDays] = useState<number>(15);
+  const [paymentFrequency, setPaymentFrequency] = useState<'quincenal' | 'cada_20_dias' | 'mensual' | 'semanal' | 'personalizado_dias'>(
+    settings.defaultFrequency || 'quincenal',
+  );
+  const [frequencyDays, setFrequencyDays] = useState<number>(settings.defaultFrequencyDays || 15);
 
   const todayStr = new Date().toISOString().split('T')[0];
   const [startDate, setStartDate] = useState(todayStr);
   const [nextDueDate, setNextDueDate] = useState(() =>
-    calculateNextDueDate(todayStr, 15),
+    calculateNextDueDate(todayStr, settings.defaultFrequencyDays || 15),
   );
 
   const [notes, setNotes] = useState('');
@@ -62,7 +64,10 @@ export function NewLoanModal({
   }, [preselectedClientId]);
 
   // Recalcular nextDueDate cuando cambia startDate o frequencyDays
-  const handleFrequencyChange = (freq: 'quincenal' | 'mensual' | 'semanal' | 'personalizado_dias', days: number) => {
+  const handleFrequencyChange = (
+    freq: 'quincenal' | 'cada_20_dias' | 'mensual' | 'semanal' | 'personalizado_dias',
+    days: number,
+  ) => {
     haptic.selection();
     setPaymentFrequency(freq);
     setFrequencyDays(days);
@@ -279,7 +284,7 @@ export function NewLoanModal({
       <Text style={[styles.sectionTitle, { marginTop: spacing[3] }]}>
         4. Frecuencia de cobro de intereses
       </Text>
-      <View style={styles.frequencyRow}>
+      <View style={styles.frequencyGrid}>
         <Pressable
           onPress={() => handleFrequencyChange('quincenal', 15)}
           style={[styles.freqCard, paymentFrequency === 'quincenal' && styles.freqCardActive]}
@@ -288,6 +293,16 @@ export function NewLoanModal({
             Quincenal
           </Text>
           <Text style={styles.freqSub}>Cada 15 días</Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => handleFrequencyChange('cada_20_dias', 20)}
+          style={[styles.freqCard, paymentFrequency === 'cada_20_dias' && styles.freqCardActive]}
+        >
+          <Text style={[styles.freqTitle, paymentFrequency === 'cada_20_dias' && styles.freqTitleActive]}>
+            Cada 20 días
+          </Text>
+          <Text style={styles.freqSub}>Cada 20 días</Text>
         </Pressable>
 
         <Pressable
@@ -470,13 +485,15 @@ const styles = StyleSheet.create({
   ratePresetTextActive: {
     color: colors.primaryDark,
   },
-  frequencyRow: {
+  frequencyGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: spacing[2],
     marginBottom: spacing[3],
   },
   freqCard: {
-    flex: 1,
+    flexBasis: '48%',
+    flexGrow: 1,
     paddingVertical: spacing[3],
     paddingHorizontal: spacing[2],
     alignItems: 'center',

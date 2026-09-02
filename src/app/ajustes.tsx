@@ -49,6 +49,12 @@ export default function AjustesScreen() {
   const [defaultInterestRate, setDefaultInterestRate] = useState(
     String(settings.defaultInterestRate || 15),
   );
+  const [defaultFrequency, setDefaultFrequency] = useState<'quincenal' | 'cada_20_dias' | 'mensual' | 'semanal' | 'personalizado_dias'>(
+    settings.defaultFrequency || 'quincenal',
+  );
+  const [defaultFrequencyDays, setDefaultFrequencyDays] = useState<number>(
+    settings.defaultFrequencyDays || 15,
+  );
   const [enableNotifications, setEnableNotifications] = useState(settings.enableNotifications);
   const [notificationHour, setNotificationHour] = useState(
     String(settings.notificationHour ?? 8),
@@ -68,6 +74,8 @@ export default function AjustesScreen() {
         phone: phone.trim(),
         paymentAccounts: paymentAccounts.trim(),
         defaultInterestRate: parseFloat(defaultInterestRate) || 15,
+        defaultFrequency,
+        defaultFrequencyDays,
         enableNotifications,
         notificationHour: parseInt(notificationHour, 10) || 8,
       });
@@ -244,6 +252,35 @@ export default function AjustesScreen() {
             onChangeText={setDefaultInterestRate}
             helperText="Puedes cambiarlo libremente en cada nuevo préstamo."
           />
+
+          <Text style={[styles.sublabel, { marginTop: spacing[3], marginBottom: spacing[2] }]}>
+            Frecuencia de cobro por defecto:
+          </Text>
+          <View style={styles.freqPresetsGrid}>
+            {[
+              { key: 'quincenal' as const, label: 'Quincenal (15d)', days: 15 },
+              { key: 'cada_20_dias' as const, label: 'Cada 20 días', days: 20 },
+              { key: 'mensual' as const, label: 'Mensual (30d)', days: 30 },
+              { key: 'semanal' as const, label: 'Semanal (7d)', days: 7 },
+            ].map((item) => {
+              const isSelected = defaultFrequency === item.key;
+              return (
+                <Pressable
+                  key={item.key}
+                  onPress={() => {
+                    haptic.selection();
+                    setDefaultFrequency(item.key);
+                    setDefaultFrequencyDays(item.days);
+                  }}
+                  style={[styles.freqChip, isSelected && styles.freqChipActive]}
+                >
+                  <Text style={[styles.freqChipText, isSelected && styles.freqChipTextActive]}>
+                    {item.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
 
         {/* SECCIÓN 6: NOTIFICACIONES DE COBRO */}
@@ -395,6 +432,40 @@ const styles = StyleSheet.create({
     ...type.micro,
     color: colors.inkMuted,
     marginTop: 2,
+  },
+  sublabel: {
+    ...type.caption,
+    color: colors.inkSecondary,
+    fontFamily: fonts.semiBold,
+  },
+  freqPresetsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing[2],
+  },
+  freqChip: {
+    flexBasis: '48%',
+    flexGrow: 1,
+    paddingVertical: spacing[2] + 2,
+    paddingHorizontal: spacing[2],
+    alignItems: 'center',
+    borderRadius: radii.md,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    backgroundColor: '#FFFFFF',
+  },
+  freqChipActive: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primarySubtle,
+  },
+  freqChipText: {
+    fontFamily: fonts.medium,
+    fontSize: 13,
+    color: colors.inkSecondary,
+  },
+  freqChipTextActive: {
+    fontFamily: fonts.bold,
+    color: colors.primaryDark,
   },
   backupExplanation: {
     ...type.caption,

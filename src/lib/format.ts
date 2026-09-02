@@ -18,12 +18,14 @@ export function percent(rate: number | null | undefined): string {
 }
 
 export function frequencyLabel(
-  freq: 'quincenal' | 'mensual' | 'semanal' | 'personalizado_dias' | string,
+  freq: 'quincenal' | 'cada_20_dias' | 'mensual' | 'semanal' | 'personalizado_dias' | string,
   days?: number | null,
 ): string {
   switch (freq) {
     case 'quincenal':
       return 'Quincenal (15 días)';
+    case 'cada_20_dias':
+      return 'Cada 20 días';
     case 'mensual':
       return 'Mensual (30 días)';
     case 'semanal':
@@ -31,17 +33,20 @@ export function frequencyLabel(
     case 'personalizado_dias':
       return `Cada ${days || 20} días`;
     default:
+      if (days) return `Cada ${days} días`;
       return freq;
   }
 }
 
 export function frequencyShort(
-  freq: 'quincenal' | 'mensual' | 'semanal' | 'personalizado_dias' | string,
+  freq: 'quincenal' | 'cada_20_dias' | 'mensual' | 'semanal' | 'personalizado_dias' | string,
   days?: number | null,
 ): string {
   switch (freq) {
     case 'quincenal':
       return 'Quincenal';
+    case 'cada_20_dias':
+      return '20 días';
     case 'mensual':
       return 'Mensual';
     case 'semanal':
@@ -49,6 +54,7 @@ export function frequencyShort(
     case 'personalizado_dias':
       return `${days || 20}d`;
     default:
+      if (days) return `${days}d`;
       return freq;
   }
 }
